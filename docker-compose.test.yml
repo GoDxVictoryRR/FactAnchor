@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: factanchor_test
+      POSTGRES_USER: factanchor_app
+      POSTGRES_PASSWORD: test_password
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U factanchor_app -d factanchor_test" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - factanchor_test_net
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - factanchor_test_net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - factanchor_test_net
+
+networks:
+  factanchor_test_net:
+    driver: bridge

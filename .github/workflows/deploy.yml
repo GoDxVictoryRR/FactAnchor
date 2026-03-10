@@ -1,0 +1,92 @@
+name: FactAnchor Deploy
+
+on:
+  workflow_run:
+    workflows: ["FactAnchor CI"]
+    types: [completed]
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      packages: write
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./docker/api.Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:${{ github.sha }}
+
+      - name: Build and push Worker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./docker/worker.Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/worker:${{ github.sha }}
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./docker/frontend.Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }}
+
+      - name: Run database migrations
+        run: |
+          docker run --rm \
+            --network host \
+            -e DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:${{ github.sha }} \
+            alembic upgrade head
+
+      - name: Deploy to staging
+        run: |
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.staging.yml \
+            up -d --no-deps \
+            --scale worker=3
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf https://staging.factanchor.internal/health; then
+              echo "Health check passed"
+              break
+            fi
+            sleep 1
+          done
+          curl -sf https://staging.factanchor.internal/ready || exit 1
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "🚨 FactAnchor deploy failed: ${{ github.sha }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

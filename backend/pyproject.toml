@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "factanchor"
+version = "1.0.0"
+description = "Reverse-RAG Factual Verification Pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic[email]>=2.6.0",
+    "pydantic-settings>=2.1.0",
+    "sqlalchemy[asyncio]>=2.0.25",
+    "asyncpg>=0.29.0",
+    "psycopg2-binary>=2.9.9",
+    "alembic>=1.13.0",
+    "celery>=5.3.6",
+    "redis>=5.0.0",
+    "flower>=2.0.0",
+    "spacy>=3.7.0",
+    "pinecone-client>=3.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[argon2]>=1.7.4",
+    "httpx>=0.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.26.0",
+    "ruff>=0.2.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
