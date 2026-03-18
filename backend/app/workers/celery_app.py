@@ -5,8 +5,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Note: In a full app, these would come from app.config.settings
+# Fetch URLs from environment
+# We prioritize DATABASE_URL for the backend if REDIS_URL is missing
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db")
 BROKER_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672//")
-RESULT_BACKEND = os.getenv("REDIS_URL", "redis://redis:6379/0")
+
+# For the result backend, we use the database to avoid Redis dependency on Render free tier
+RESULT_BACKEND = os.getenv("REDIS_URL")
+if not RESULT_BACKEND:
+    # Convert postgresql:// to db+postgresql:// for Celery
+    RESULT_BACKEND = DATABASE_URL.replace("postgresql://", "db+postgresql://")
 
 app = Celery(
     "factanchor",
