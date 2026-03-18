@@ -75,9 +75,16 @@ def create_app() -> FastAPI:
         TrustedHostMiddleware,
         allowed_hosts=["*"], # Allow all hosts for deployment stability on Render
     )
+    # CORS configuration
+    # Note: allow_origins cannot be ["*"] if allow_credentials is True
+    cors_origins = settings.cors_origins_list
+    if not settings.is_production:
+        cors_origins.append("http://localhost:3000")
+        cors_origins.append("http://localhost:8000")
+    
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins_list if settings.is_production else ["*"],
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
