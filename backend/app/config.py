@@ -54,14 +54,23 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        if self.DATABASE_URL:
-            # Automatic conversion from direct postgres:// to asyncpg if needed
-            url = self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
-            return url.replace("+asyncpg+asyncpg", "+asyncpg") # Prevent double-injection
-        return (
-            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
+        # Check standard DATABASE_URL first (priority from dashboard)
+        db_url = self.DATABASE_URL
+        if not db_url:
+            db_url = (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+        
+        # Automatic conversion from direct postgres:// to asyncpg if needed
+        url = db_url.replace("postgresql://", "postgresql+asyncpg://")
+        url = url.replace("+asyncpg+asyncpg", "+asyncpg") # Prevent double-injection
+        
+        # Disable prepared statement cache for PgBouncer compatibility (transaction mode)
+        # This is critical for Supabase deployments using a connection pooler
+        if "?" in url:
+            return f"{url}&prepared_statement_cache_size=0"
+        return f"{url}?prepared_statement_cache_size=0"
 
     @property
     def database_url_sync(self) -> str:
