@@ -75,9 +75,12 @@ def create_app() -> FastAPI:
         TrustedHostMiddleware,
         allowed_hosts=["*"], # Allow all hosts for deployment stability on Render
     )
-    # CORS configuration
+    # app.add_middleware(RateLimitMiddleware)
+    # app.add_middleware(RequestLoggingMiddleware)
+
+    # CORS configuration (LAST = OUTERMOST)
     # Note: Using regex to dynamically allow and reflect origins. 
-    # This is standard practice when allow_credentials=True is required across multiple environments.
+    # This must be the outermost layer to handle errors from inner layers.
     app.add_middleware(
         CORSMiddleware,
         allow_origin_regex="https?://.*",
@@ -86,8 +89,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
         expose_headers=["*"],
     )
-    app.add_middleware(RateLimitMiddleware)
-    app.add_middleware(RequestLoggingMiddleware)
 
     # Routers
     app.include_router(api_router)
