@@ -73,11 +73,11 @@ def create_app() -> FastAPI:
     # Middleware (outermost first)
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*"] if not settings.is_production else settings.cors_origins_list,
+        allowed_hosts=["*"], # Allow all hosts for deployment stability on Render
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Broaden for development troubleshooting
+        allow_origins=settings.cors_origins_list if settings.is_production else ["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

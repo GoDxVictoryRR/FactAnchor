@@ -17,7 +17,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    environment: staging
+    # environment: staging
 
     steps:
       - uses: actions/checkout@v4
@@ -53,13 +53,13 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }}
 
-      - name: Run database migrations
-        run: |
-          docker run --rm \
-            --network host \
-            -e DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:${{ github.sha }} \
-            alembic upgrade head
+      # - name: Run database migrations
+      #   run: |
+      #     docker run --rm \
+      #       --network host \
+      #       -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+      #       ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:${{ github.sha }} \
+      #       alembic upgrade head
 
       - name: Deploy to staging
         run: |
@@ -88,5 +88,5 @@ jobs:
             {
               "text": "🚨 FactAnchor deploy failed: ${{ github.sha }}"
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        # env:
+        #   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

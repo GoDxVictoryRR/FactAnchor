@@ -64,7 +64,12 @@ async function apiFetch<T>(
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`${BASE_URL}${path}`, {
+    // Prevent doubling /api/v1 if it's already in the BASE_URL
+    const cleanPath = (BASE_URL.endsWith("/api/v1") && path.startsWith("/api/v1"))
+        ? path.replace("/api/v1", "")
+        : path;
+
+    const res = await fetch(`${BASE_URL}${cleanPath}`, {
         ...options,
         headers,
     });

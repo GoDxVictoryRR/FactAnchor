@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = Field(default="factanchor")
     POSTGRES_USER: str = Field(default="factanchor_app")
     POSTGRES_PASSWORD: str = Field(default="CHANGE_ME_STRONG_PASSWORD")
+    DATABASE_URL: Optional[str] = Field(default=None)
+    DATABASE_URL_SYNC: Optional[str] = Field(default=None)
 
     # RabbitMQ
     RABBITMQ_URL: str = Field(default="amqp://guest:guest@rabbitmq:5672//")
@@ -52,6 +54,10 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        if self.DATABASE_URL:
+            # Automatic conversion from direct postgres:// to asyncpg if needed
+            url = self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+            return url.replace("+asyncpg+asyncpg", "+asyncpg") # Prevent double-injection
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
@@ -59,6 +65,10 @@ class Settings(BaseSettings):
 
     @property
     def database_url_sync(self) -> str:
+        if self.DATABASE_URL_SYNC:
+            return self.DATABASE_URL_SYNC
+        if self.DATABASE_URL:
+             return self.DATABASE_URL.replace("+asyncpg", "")
         return (
             f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
