@@ -56,12 +56,12 @@ async def submit_report(
 
     # 5. Dispatch Celery tasks
     from ...workers.tasks import verify_claim as verify_claim_task
-    for c in claims:
-        # In production, we'd use the actual DB claim IDs
-        verify_claim_task.delay(str(report.id), str(report.id))
+    # We submit ONE task per report; the worker now handles iterating through claims
+    verify_claim_task.delay(str(report.id), str(report.id))
 
     # 6. Return with WS URL
-    ws_url = f"ws://localhost/ws/reports/{report.id}/stream"
+    ws_host = settings.CORS_ORIGINS.split(",")[0].replace("http://", "ws://").replace("https://", "wss://")
+    ws_url = f"{ws_host}/ws/reports/{report.id}/stream"
     return ReportSubmitResponse(
         report_id=report.id,
         total_claims=len(claims),

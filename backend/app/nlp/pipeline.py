@@ -27,7 +27,7 @@ def get_pipeline() -> Language:
     if _nlp is not None:
         return _nlp
 
-    model_name = "en_core_web_trf"
+    model_name = "en_core_web_sm"
     try:
         logger.info(f"Loading spaCy model: {model_name}")
         _nlp = spacy.load(model_name)
