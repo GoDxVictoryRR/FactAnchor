@@ -75,20 +75,35 @@ def create_app() -> FastAPI:
         TrustedHostMiddleware,
         allowed_hosts=["*"], # Allow all hosts for deployment stability on Render
     )
+    # --- Absolute Custom CORS Middleware (Scorched Earth Fix) ---
+    @app.middleware("http")
+    async def custom_cors_middleware(request: Request, call_next):
+        # Handle preflight
+        if request.method == "OPTIONS":
+            response = JSONResponse(status_code=204, content={})
+        else:
+            try:
+                response = await call_next(request)
+            except Exception as e:
+                logger.error(f"Internal Server Error in Middleware Chain: {e}", exc_info=True)
+                response = JSONResponse(
+                    status_code=500,
+                    content={"error": "Internal Server Error", "detail": str(e)}
+                )
+
+        # Reflect Origin for all requests (Bulletproof CORS)
+        origin = request.headers.get("Origin")
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, X-FactAnchor-Key"
+        
+        return response
+    # ----------------------------------------------------------
+
     # app.add_middleware(RateLimitMiddleware)
     # app.add_middleware(RequestLoggingMiddleware)
-
-    # CORS configuration (LAST = OUTERMOST)
-    # Note: Using regex to dynamically allow and reflect origins. 
-    # This must be the outermost layer to handle errors from inner layers.
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex="https?://.*",
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-    )
 
     # Routers
     app.include_router(api_router)
