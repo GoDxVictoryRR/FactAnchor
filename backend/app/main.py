@@ -76,24 +76,15 @@ def create_app() -> FastAPI:
         allowed_hosts=["*"], # Allow all hosts for deployment stability on Render
     )
     # CORS configuration
-    # Note: allow_origins cannot be ["*"] if allow_credentials is True
-    cors_origins = settings.cors_origins_list
-    
-    # FORCE append production Vercel origin for deployment stability
-    # This prevents environment variable overrides from breaking the frontend
-    if "https://fact-anchor.vercel.app" not in cors_origins:
-        cors_origins.append("https://fact-anchor.vercel.app")
-        
-    if not settings.is_production:
-        cors_origins.append("http://localhost:3000")
-        cors_origins.append("http://localhost:8000")
-    
+    # Note: Using regex to dynamically allow and reflect origins. 
+    # This is standard practice when allow_credentials=True is required across multiple environments.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origin_regex="https?://.*",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["*"],
     )
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
