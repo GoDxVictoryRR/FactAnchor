@@ -34,7 +34,12 @@ def get_pipeline() -> Language:
     except OSError:
         model_name = "en_core_web_lg"
         logger.warning(f"Transformer model not found. Falling back to: {model_name}")
-        _nlp = spacy.load(model_name)
+        try:
+            _nlp = spacy.load(model_name)
+        except OSError:
+            model_name = "en_core_web_sm"
+            logger.warning(f"Large model not found. Falling back to lightweight: {model_name}")
+            _nlp = spacy.load(model_name)
 
     # Add custom segmenter if not already present
     if "claim_segmenter" not in _nlp.pipe_names:
