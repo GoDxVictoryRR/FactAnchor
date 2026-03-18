@@ -60,8 +60,8 @@ async def submit_report(
     verify_claim_task.delay(str(report.id), str(report.id))
 
     # 6. Return with WS URL
-    ws_host = settings.CORS_ORIGINS.split(",")[0].replace("http://", "ws://").replace("https://", "wss://")
-    ws_url = f"{ws_host}/ws/reports/{report.id}/stream"
+    ws_base = settings.BACKEND_URL.replace("http://", "ws://").replace("https://", "wss://")
+    ws_url = f"{ws_base}/ws/reports/{report.id}/stream"
     return ReportSubmitResponse(
         report_id=report.id,
         total_claims=len(claims),

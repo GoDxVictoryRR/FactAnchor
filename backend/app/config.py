@@ -47,10 +47,10 @@ class Settings(BaseSettings):
     INITIAL_ADMIN_EMAIL: Optional[str] = Field(default=None)
     INITIAL_ADMIN_PASSWORD: Optional[str] = Field(default=None)
 
-    # App
     APP_ENV: str = Field(default="development")
     LOG_LEVEL: str = Field(default="INFO")
     CORS_ORIGINS: str = Field(default="http://localhost:3000")
+    BACKEND_URL: str = Field(default="http://localhost:8000")
 
     @property
     def database_url(self) -> str:
