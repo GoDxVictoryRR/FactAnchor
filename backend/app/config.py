@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     APP_ENV: str = Field(default="development")
     LOG_LEVEL: str = Field(default="INFO")
     CORS_ORIGINS: str = Field(default="http://localhost:3000,https://fact-anchor.vercel.app")
-    BACKEND_URL: str = Field(default="http://localhost:8000")
+    BACKEND_URL: str = Field(default="https://factanchor-api.onrender.com")
 
     @property
     def database_url(self) -> str:
