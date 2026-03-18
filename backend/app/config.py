@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     APP_ENV: str = Field(default="development")
     LOG_LEVEL: str = Field(default="INFO")
-    CORS_ORIGINS: str = Field(default="http://localhost:3000")
+    CORS_ORIGINS: str = Field(default="http://localhost:3000,https://fact-anchor.vercel.app")
     BACKEND_URL: str = Field(default="http://localhost:8000")
 
     @property
