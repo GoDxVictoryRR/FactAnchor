@@ -38,10 +38,10 @@ print('Login success! Got token.')
 print('3. Submitting Demo Medical/Finance Report...')
 report_text = 'The patient was prescribed 50mg of Aspirin daily. Our Q3 revenue reached $5.5 million with a 12% YoY growth.'
 status, report_data = request(f'{BASE_URL}/reports', 'POST', {'text': report_text}, headers=headers)
-if status != 200:
+if status not in (200, 202):
     print(f'Report submission failed: {report_data}')
     exit(1)
-report_id = report_data.get('id')
+report_id = report_data.get('report_id')
 print(f'Report submitted! ID: {report_id}')
 
 print('4. Polling for completion...')

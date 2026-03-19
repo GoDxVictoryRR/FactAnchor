@@ -69,8 +69,8 @@ class Settings(BaseSettings):
         # Disable prepared statement cache for PgBouncer compatibility (transaction mode)
         # This is critical for Supabase deployments using a connection pooler
         if "?" in url:
-            return f"{url}&prepared_statement_cache_size=0"
-        return f"{url}?prepared_statement_cache_size=0"
+            return f"{url}&statement_cache_size=0"
+        return f"{url}?statement_cache_size=0"
 
     @property
     def database_url_sync(self) -> str:
