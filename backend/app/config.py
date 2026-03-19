@@ -66,11 +66,7 @@ class Settings(BaseSettings):
         url = db_url.replace("postgresql://", "postgresql+asyncpg://")
         url = url.replace("+asyncpg+asyncpg", "+asyncpg") # Prevent double-injection
         
-        # Disable prepared statement cache for PgBouncer compatibility (transaction mode)
-        # This is critical for Supabase deployments using a connection pooler
-        if "?" in url:
-            return f"{url}&statement_cache_size=0"
-        return f"{url}?statement_cache_size=0"
+        return url
 
     @property
     def database_url_sync(self) -> str:
