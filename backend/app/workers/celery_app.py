@@ -17,7 +17,9 @@ for key in ["CELERY_RESULT_BACKEND", "REDIS_URL", "CELERY_BROKER_URL"]:
 
 # For the result backend, we use the database to avoid Redis dependency on Render free tier.
 # We FORCE use the database URL to override any misconfigured environment variables.
-RESULT_BACKEND = DATABASE_URL.replace("postgresql://", "db+postgresql://").replace("postgres://", "db+postgresql://")
+# Safely handle various Postgres schemes (postgresql://, postgres://, postgresql+asyncpg://)
+import re
+RESULT_BACKEND = re.sub(r"^postgres(?:ql)?(?:\+.*?)*://", "db+postgresql://", DATABASE_URL)
 
 # Ensure we don't have multiple prefixes
 RESULT_BACKEND = RESULT_BACKEND.replace("db+db+", "db+")
