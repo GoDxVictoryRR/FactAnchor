@@ -6,7 +6,7 @@ import type {
     LoginResponse,
 } from "@/lib/types/api";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://factanchor-api.onrender.com";
 
 // ── Custom Errors ──
 
