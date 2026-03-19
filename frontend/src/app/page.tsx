@@ -12,7 +12,7 @@ async function getRecentReports(): Promise<ReportSummary[] | null> {
     if (!token) return null;
 
     try {
-        const baseUrl = process.env.API_INTERNAL_URL || "http://localhost:8000";
+        const baseUrl = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "https://factanchor-api.onrender.com";
         const res = await fetch(`${baseUrl}/api/v1/reports?page=1&per_page=10`, {
             headers: { Authorization: `Bearer ${token}` },
             cache: "no-store",
