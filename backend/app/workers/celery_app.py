@@ -10,6 +10,11 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db")
 BROKER_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672//")
 
+# Scrub any Render-injected Redis variables to prevent Celery from dynamically overriding the backend
+for key in ["CELERY_RESULT_BACKEND", "REDIS_URL", "CELERY_BROKER_URL"]:
+    if key in os.environ and "redis" in os.environ.get(key, ""):
+        os.environ.pop(key, None)
+
 # For the result backend, we use the database to avoid Redis dependency on Render free tier.
 # We FORCE use the database URL to override any misconfigured environment variables.
 RESULT_BACKEND = DATABASE_URL.replace("postgresql://", "db+postgresql://").replace("postgres://", "db+postgresql://")
