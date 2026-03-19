@@ -8,6 +8,7 @@ from ...db.session import get_async_session
 from ...db.models import User, Report, Claim
 from ...db.repositories import ReportRepository, ClaimRepository
 from ...auth.middleware import get_current_user
+from ...config import settings
 from ...schemas.report import (
     ReportSubmitRequest, ReportSubmitResponse, ReportDetail, ClaimSummary,
     PaginatedReports, ReportListItem,
