@@ -11,5 +11,6 @@ api_router.include_router(claims_router)
 api_router.include_router(health_router)
 api_router.include_router(auth_router)
 
-# WebSocket router (no /api/v1 prefix)
-ws_api_router = ws_router
+# WebSocket router
+api_router.include_router(ws_router, prefix="/ws/reports")
+ws_api_router = api_router # This ensures they are all mounted under /api/v1? No.

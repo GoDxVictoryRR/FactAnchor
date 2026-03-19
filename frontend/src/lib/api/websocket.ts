@@ -35,7 +35,7 @@ export class ReportWebSocket {
     connect(): void {
         if (this.intentionallyClosed) return;
 
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://factanchor-api.onrender.com";
+        const wsUrl = (process.env.NEXT_PUBLIC_WS_URL || "wss://factanchor-api.onrender.com").replace(/\/$/, "");
         const url = `${wsUrl}/ws/reports/${this.reportId}/stream?token=${this.token}`;
 
         this.setConnectionState("connecting");

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.websocket("/ws/reports/{report_id}/stream")
+@router.websocket("/{report_id}/stream")
 async def verification_stream(websocket: WebSocket, report_id: str, token: str = Query(None)):
     """
     WebSocket endpoint for real-time claim verification updates.
@@ -30,25 +30,34 @@ async def verification_stream(websocket: WebSocket, report_id: str, token: str =
     logger.info(f"WebSocket connected: report={report_id}, user={user_id}")
 
     try:
-        # 3. Subscribe to Redis pub/sub channel
-        from redis.asyncio import from_url
-        from app.config import settings
-        
-        redis = from_url(settings.REDIS_URL)
-        pubsub = redis.pubsub()
-        channel = f"report:{report_id}"
-        await pubsub.subscribe(channel)
-        logger.info(f"Subscribed to {channel}")
-
         async def listen_to_redis():
             try:
+                # 3. Subscribe to Redis pub/sub channel
+                from redis.asyncio import from_url
+                from app.config import settings
+                
+                # Check if Redis URL is valid and reachable
+                if not settings.REDIS_URL or "redis:" not in settings.REDIS_URL:
+                    logger.warning("Redis not configured. WebSocket entering Heartbeat-only mode.")
+                    return
+
+                redis = from_url(settings.REDIS_URL, socket_timeout=5, socket_connect_timeout=5)
+                pubsub = redis.pubsub()
+                channel = f"report:{report_id}"
+                await pubsub.subscribe(channel)
+                logger.info(f"Subscribed to {channel}")
+
                 async for message in pubsub.listen():
                     if message["type"] == "message":
                         data = message["data"].decode("utf-8")
                         await websocket.send_text(data)
                         logger.info(f"Sent WS message: {data[:50]}...")
+                
+                await pubsub.unsubscribe(channel)
+                await redis.close()
             except Exception as e:
-                logger.error(f"Redis listen error: {e}")
+                logger.error(f"Redis listen error/unavailable: {e}")
+                # Don't close WS; let it keep the heartbeat going
 
         # Task for listening to Redis
         redis_task = asyncio.create_task(listen_to_redis())
@@ -64,13 +73,14 @@ async def verification_stream(websocket: WebSocket, report_id: str, token: str =
                 break
         
         redis_task.cancel()
-        await pubsub.unsubscribe(channel)
-        await redis.close()
-
+        # Cleanup is handled inside listen_to_redis or skipped if Redis failed
+        pass
     except WebSocketDisconnect:
         logger.info(f"WebSocket disconnected: report={report_id}")
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
-        await websocket.send_json({"type": "error", "code": "WORKER_FAILED", "message": str(e)})
+        try:
+            await websocket.send_json({"type": "error", "code": "WORKER_FAILED", "message": str(e)})
+        except: pass
     finally:
         logger.info(f"WebSocket cleanup: report={report_id}")
