@@ -1,6 +1,6 @@
 import type { ReportDetail, PaginatedReports } from "@/lib/types/api";
 
-const INTERNAL_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "https://factanchor-api.onrender.com";
+const INTERNAL_URL = process.env.API_INTERNAL_URL || "https://factanchor-api.onrender.com";
 
 async function serverFetch<T>(path: string, token: string): Promise<T> {
     const res = await fetch(`${INTERNAL_URL}${path}`, {
