@@ -30,4 +30,4 @@ if __name__ == "__main__":
 
     # Start the Celery worker in the main thread (blocking)
     print("[Celery Wrapper] Booting up Celery background worker...")
-    subprocess.run(["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info"])
+    subprocess.run(["celery", "-A", "app.workers.celery_app", "worker", "-Q", "celery,verification", "--loglevel=info"])
