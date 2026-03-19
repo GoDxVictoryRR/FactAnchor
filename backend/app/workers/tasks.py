@@ -11,7 +11,11 @@ from sqlalchemy import select, update
 import redis
 from ..config import settings
 
-redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+try:
+    redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    redis_client.ping()
+except Exception:
+    redis_client = None
 
 logger = get_task_logger(__name__)
 
@@ -71,16 +75,20 @@ def verify_claim(self, claim_id: str, report_id: str):
 
                     logger.info(f"Claim #{claim.sequence_num} result: {claim.status}")
                     
-                    # Publish real-time update
-                    redis_client.publish(
-                        f"report:{report_id}",
-                        json.dumps({
-                            "type": "claim_update",
-                            "claim_id": str(claim.id),
-                            "status": claim.status,
-                            "sequence_num": claim.sequence_num
-                        })
-                    )
+                    # Publish real-time update (non-fatal)
+                    if redis_client:
+                        try:
+                            redis_client.publish(
+                                f"report:{report_id}",
+                                json.dumps({
+                                    "type": "claim_update",
+                                    "claim_id": str(claim.id),
+                                    "status": claim.status,
+                                    "sequence_num": claim.sequence_num
+                                })
+                            )
+                        except Exception:
+                            pass
 
             session.commit()
             logger.info(f"Committed changes for report {report_id}")
@@ -147,15 +155,19 @@ def check_report_complete(report_id: str):
             )
             session.commit()
             
-            # Publish final completion
-            redis_client.publish(
-                f"report:{report_id}",
-                json.dumps({
-                    "type": "report_complete",
-                    "confidence_score": float(confidence.score),
-                    "anchor": confidence.hash
-                })
-            )
+            # Publish final completion (non-fatal)
+            if redis_client:
+                try:
+                    redis_client.publish(
+                        f"report:{report_id}",
+                        json.dumps({
+                            "type": "report_complete",
+                            "confidence_score": float(confidence.score),
+                            "anchor": confidence.hash
+                        })
+                    )
+                except Exception:
+                    pass
 
             logger.info(f"SUCCESS: Report {report_id} finalized with score {confidence.score}")
         finally:
